@@ -3,7 +3,9 @@ package normalizer
 import (
 	"log"
 	// "reflect"
-	"regexp"
+	regexp2 "regexp"
+
+	regexp "github.com/dlclark/regexp2"
 
 	"github.com/sugarme/tokenizer/util"
 )
@@ -107,16 +109,25 @@ func (s *StringPattern) FindMatches(inside string) []OffsetsMatch {
 		}
 	}
 
-	quoted := regexp.QuoteMeta(s.string)
+	quoted := regexp2.QuoteMeta(s.string)
 
-	re := regexp.MustCompile(quoted)
+	re := regexp.MustCompile(quoted, 0)
 
 	return findMatches(re, inside)
 }
 
 func findMatches(re *regexp.Regexp, inside string) []OffsetsMatch {
 
-	matches := re.FindAllStringIndex(inside, -1)
+	//matches := re.FindAllStringIndex(inside, -1)
+
+	matches := make([][]int, 0)
+	m, _ := re.FindStringMatch(inside)
+	for m != nil {
+		begin := m.Index
+		end := m.Index + m.Length
+		matches = append(matches, []int{begin, end})
+		m, _ = re.FindNextMatch(m)
+	}
 
 	// 0. If no matches, just return
 	if len(matches) == 0 {
@@ -189,7 +200,7 @@ type RegexpPattern struct {
 }
 
 func NewRegexpPattern(s string) *RegexpPattern {
-	re := regexp.MustCompile(s)
+	re := regexp.MustCompile(s, 0)
 	return &RegexpPattern{
 		re: re,
 	}
